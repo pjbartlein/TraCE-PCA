@@ -3,12 +3,6 @@
 # load packages and set paths
 library(ncdf4)
 library(RSpectra)
-# library(RColorBrewer)
-# library(lattice)
-# library(rnaturalearth)
-
-# # get a world outline
-# world <- ne_coastline(scale = 110, returnclass = "sp")
 
 # set paths
 ncpath <- "../data/nc_files/"
@@ -29,12 +23,11 @@ out_path <- "../data/SVD/"
 ncname <- "TraCE_tas_lln_monlenadj_locanm_hw30.nc"
 dname <- "tas_locanm"
 
+# output file names
 fname <- paste(file_label, "RSpectra", dname, sep="_")
 scoresfile <- paste(out_path, fname, "_scores.csv", sep="")
 statsfile <- paste(out_path, fname, "_stats.csv", sep="")
 ncloadings <- paste(out_path, fname, "_loadings.nc", sep="")
-
-
 
 # read data
 
@@ -78,22 +71,6 @@ history <- ncatt_get(ncin, 0, "history")
 Conventions <- ncatt_get(ncin, 0, "Conventions")
 nc_close(ncin)
 
-# # plot a slice of data
-# i <- 1
-# var_slice <- matrix(NA, nlon, nlat)
-# var_slice[1:(nlon/2), ] <- var_array[((nlon/2)+1):nlon, , i]
-# var_slice[((nlon/2)+1):nlon, ] <- var_array[1:(nlon/2), , i]
-# lon2 <- rep(0, nlon)
-# lon2[1:(nlon/2)] <- lon[((nlon/2)+1):nlon] - 360.0
-# lon2[((nlon/2)+1):nlon] <- lon[1:(nlon/2)]
-# 
-# # levelplot of the slice
-# grid <- expand.grid(lon2=lon2, lat=lat)
-# cutpts <- c(-60,-10,-2,-1,0,1,2,5,10,50)
-# lp <- levelplot(var_slice ~ lon2 * lat, data=grid, at=cutpts, cuts=11, pretty=T, 
-#           col.regions=(rev(brewer.pal(10,"RdBu"))))
-# lp + latticeExtra::layer(sp.lines(world, col="black", lwd=0.5))
-
 ## # (not run) trim data to N.H.
 ## lat <- lat[47:91]
 ## nlat <- dim(lat)
@@ -107,19 +84,20 @@ X <- t(matrix(var_vec_long, nrow = nlon * nlat, ncol = nt))
 dim(X)
 
 # set n, p, and ncomp
-n <- dim(X)[1]
-p <- dim(X)[2]
-ncomp <- 10
+n <- dim(X)[1] # number of observations
+p <- dim(X)[2] # number of gridpoints
+ncomp <- 10 # number of components to extract
 print (c(n, p, ncomp, n * p))
 
-# SCD via RSpectra
+
+# SCD via RSpectra -- time the various steps
 time_RSpectra <- proc.time()
-system.time( Z <- as.matrix(scale(X)) )
+system.time( Z <- as.matrix(scale(X)) ) # use correlation matrix 
 system.time( svd_Z <- svds(Z, k=ncomp, nu=ncomp, nv=ncomp) )
 time_RSpectra <- proc.time() - time_RSpectra
 time_RSpectra
 
-# eigenvalues
+# eigenvalues (d)
 eigenvalues <- svd_Z$d / sqrt(n-1)
 eigenvalues
 
@@ -127,7 +105,7 @@ eigenvalues
 loadpca <- svd_Z$v * t(matrix(rep(eigenvalues, ncomp * p), nrow=ncomp, ncol=p))
 head(loadpca); tail(loadpca)
 
-# scores
+# scores (u)
 scores <- (svd_Z$u*sqrt(n-1)) # svd_A$u #
 colnames(scores) <- paste("S", as.character(seq(1, ncomp, by=1)), sep="")
 head(scores); tail(scores)
@@ -137,68 +115,15 @@ apply(scores, 2, mean); apply(scores, 2, sd); apply(scores, 2, range)
 eigenvalues_RSpectra <- eigenvalues
 loadpca_RSpectra <- loadpca
 scores_RSpectra <- scores
-# # 
-# # plot a slice of data
-# i <- 1
-# var_slice <- matrix(NA, nlon, nlat)
-# dim(var_slice)
-# var_slice[1:(nlon/2), ] <- var_array[((nlon/2)+1):nlon, , i]
-# var_slice[((nlon/2)+1):nlon, ] <- var_array[1:(nlon/2), , i]
-# lon2 <- rep(0, nlon)
-# lon2[1:(nlon/2)] <- lon[((nlon/2)+1):nlon] - 360.0
-# lon2[((nlon/2)+1):nlon] <- lon[1:(nlon/2)]
-# 
-# # levelplot of the slice
-# grid <- expand.grid(lon2=lon2, lat=lat)
-# cutpts <- c(-60,-10,-2,-1,0,1,2,5,10,50)
-# lp <- levelplot(var_slice ~ lon2 * lat, data=grid, at=cutpts, cuts=11, pretty=T, 
-#                 col.regions=(rev(brewer.pal(10,"RdBu"))))
-# lp + latticeExtra::layer(sp.lines(world, col="black", lwd=0.5))
-# 
-# 
-# # quick map of component loadings
-# i <- 1
-# var_slice <- matrix(loadpca_RSpectra[, i], ncol=nlon, nrow=nlat, byrow=TRUE)
-# dim(var_slice)
-# grid <- expand.grid(lon=lon, lat=lat)
-# cutpts <- c(-1,-.8,-.6,-.4,-.2,0,.2,.4,.6,.8,1.0)
-# lp <-levelplot(t(var_slice) ~ lon * lat, data=grid, at=cutpts, cuts=11, pretty=T,
-#           col.regions=(rev(brewer.pal(10,"RdBu"))))
-# lp
-# 
-# # quick map of component loadings
-# i <- 1
-# var_slice <- (matrix(loadpca_RSpectra[, i], ncol=nlon, nrow=nlat, byrow=TRUE))
-# dim(var_slice)
-# # var_slice[, 1:(nlon/2)] <- var_slice[, ((nlon/2)+1):nlon]
-# # var_slice[, ((nlon/2)+1):nlon] <- var_slice[, 1:(nlon/2)]
-# lon2 <- rep(0, nlon)
-# lon2[1:(nlon/2)] <- lon[((nlon/2)+1):nlon] - 360.0
-# lon2[((nlon/2)+1):nlon] <- lon[1:(nlon/2)]
-# cutpts <- c(-1,-.8,-.6,-.4,-.2,0,.2,.4,.6,.8,1.0)
-# lp <- levelplot(t(var_slice) ~ lon * lat, data=grid, at=cutpts, cuts=11, pretty=T,
-#           col.regions=(rev(brewer.pal(10,"RdBu"))))
-# lp
-# lp + latticeExtra::layer(sp.lines(world, col="black", lwd=0.5))
-# 
-# # timeseries plot of scores
-# plot(plt_xvals, scores[,5], type="l")
+prop_EV <- (eigenvalues^2)/p
+cum_prop_EV <- cumsum(prop_EV)
 
 # write output
 
-# RSpectra
-# fname <- paste(file_label, "RSpectra", sep="_")
-eigenvalues <- eigenvalues_RSpectra
-loadpca <- loadpca_RSpectra
-scores <- scores_RSpectra
-
 # statistics
-prop_EV <- (eigenvalues^2)/p
-cum_prop_EV <- cumsum(prop_EV)
 statsout <- cbind(eigenvalues,prop_EV,cum_prop_EV)
 statsout
 write.table(statsout, file=statsfile, row.names=TRUE, col.names=TRUE, sep=",")
-
 
 # write scores
 scoresout <- cbind(plt_xvals,scores)
