@@ -6,10 +6,10 @@ This repository contains R-code for performing large-scale PCA eigenvector analy
 
 The contents of the various folders are as follows
 
-| Folder      | Description                                           | | | 
-|:----------- |:------------------------------------------------------|---|---|
-|`/R`         | `R` code   | | |
-|`/animations`| scripts for `ImageMagick` animated .gifs of the rolling correlation qgraphs | | |
-|`/data`      | data sets | | |
-|`/figs`      | figures   | | |
-|`/ncl `      | `NCL` code for plotting component-loading maps and scores time series | | |
+| Folder      | Description                                           |
+|:----------- |:------------------------------------------------------|
+|`/R`         | `R` code   | 
+|`/animations`| scripts for `ImageMagick` animated .gifs of the rolling correlation qgraphs | 
+|`/data`      | data sets | 
+|`/figs`      | figures   | 
+|`/ncl `      | `NCL` code for plotting component-loading maps and scores time series | 
